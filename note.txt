@@ -1,0 +1,21 @@
+Method 1: Local Testing (Recommended)
+In your project folder (engineering degree os):
+Create a folder named .streamlit (notice the dot at the beginning).
+Inside .streamlit, create a file named secrets.toml.
+Open secrets.toml and paste:
+code
+Toml
+GEMINI_API_KEY = "your_actual_gemini_api_key_here"
+(Your folder structure will look like this):
+code
+Text
+engineering degree os/
+│
+├── .streamlit/
+│   └── secrets.toml     <-- Put your key here
+├── data/
+│   ├── semesters.csv
+│   └── ...
+├── app.py
+└── requirements.txt
+⚠️ Important: Create a .gitignore file in your root folder and add .streamlit/secrets.toml to it so git never uploads your key to GitHub!
