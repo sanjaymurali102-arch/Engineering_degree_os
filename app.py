@@ -643,7 +643,12 @@ nav_options = [
     "11. Data Admin",
 ]
 
-selected_tab = st.sidebar.radio("NAVIGATION", nav_options)
+# Guarantee state resets to "1. Dashboard" if cleared on sign-out
+if "nav_selection" not in st.session_state:
+    st.session_state["nav_selection"] = "1. Dashboard"
+
+selected_tab = st.sidebar.radio("NAVIGATION", nav_options, key="nav_selection")
+
 st.sidebar.markdown("---")
 st.sidebar.caption("STUDENT WORKSPACE")
 st.sidebar.info("💡 Use **Data Admin** to manage your academic datasets.")
@@ -656,7 +661,6 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 
 # =========================================================
 # TAB 1 — DASHBOARD

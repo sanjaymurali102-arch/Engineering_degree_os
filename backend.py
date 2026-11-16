@@ -374,28 +374,21 @@ def show_authentication() -> bool:
 # ---------------- LOGOUT ----------------
 
 def logout_button():
-
-    if st.sidebar.button(
-        "🚪 Sign out",
-        use_container_width=True
-    ):
-
+    if st.sidebar.button("🚪 Sign out", use_container_width=True):
         try:
             get_backend().sign_out()
-
-        except Exception as exc:
-            st.warning(f"Sign-out warning: {exc}")
-
         finally:
-
-            st.session_state.pop(
-                "degree_user_authenticated",
-                None
-            )
-
-            st.session_state.pop(
-                "degree_user_email",
-                None
-            )
-
+            # Clear all authentication and navigation session state keys
+            keys_to_clear = [
+                "degree_user_authenticated", 
+                "degree_user_email", 
+                "_degree_supabase_backend", 
+                "nav_selection", 
+                "Navigation"
+            ]
+            for key in keys_to_clear:
+                st.session_state.pop(key, None)
+            
+            # Reset system boot flag to trigger fresh load on re-login
+            st.session_state.pop("system_booted", None)
             st.rerun()
