@@ -1,7 +1,14 @@
 import os
 import datetime
+import extra_streamlit_components as stx
 import pandas as pd
 import streamlit as st
+import plotly.express as px
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from backend import get_backend, show_authentication, logout_button
 
 # Safe import for Gemini SDK
 try:
@@ -11,12 +18,13 @@ try:
 except ImportError:
     GEMINI_AVAILABLE = False
 
-# ==========================================
-# PAGE CONFIGURATION & SETUP
-# ==========================================
+
+# =========================================================
+# PAGE CONFIGURATION
+# =========================================================
 st.set_page_config(
     page_title="My Engineering Degree OS",
-    page_icon="🎓",
+    page_icon="❤️‍🔥",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -25,9 +33,389 @@ DATA_DIR = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
 today_dt = pd.Timestamp(datetime.date.today())
 
-# ==========================================
-# DEFAULT DATASETS (RUBRIC-ALIGNED)
-# ==========================================
+
+# =========================================================
+# MODERN ACADEMIC OS — LIGHT + FUTURISTIC DESIGN
+# =========================================================
+st.markdown(
+    """
+    <style>
+    :root {
+        --ink: #252B49;
+        --muted: #8189A2;
+        --purple: #686DDA;
+        --purple-soft: #F0F0FF;
+        --blue: #55A8D7;
+        --mint: #37B99A;
+        --coral: #F08B79;
+        --amber: #E6A942;
+        --line: #E9ECF5;
+        --surface: #FFFFFF;
+        --page: #F6F7FC;
+    }
+
+    .stApp {
+        background:
+            radial-gradient(ellipse at 5% 0%, rgba(190, 184, 255, .18), transparent 28%),
+            radial-gradient(ellipse at 95% 8%, rgba(139, 218, 220, .15), transparent 25%),
+            var(--page);
+        color: var(--ink);
+    }
+
+    .block-container {
+        max-width: 1500px;
+        padding-top: 1.8rem;
+        padding-bottom: 3rem;
+    }
+
+    h1, h2, h3 {
+        color: var(--ink) !important;
+        letter-spacing: -0.6px;
+    }
+
+    h1 {
+        font-weight: 800 !important;
+        letter-spacing: -1.2px;
+    }
+
+    h2, h3 {
+        font-weight: 700 !important;
+    }
+
+    p, label, .stCaption {
+        color: #69718A;
+    }
+
+    section[data-testid="stSidebar"] {
+        background: #FFFFFF;
+        border-right: 1px solid var(--line);
+    }
+
+    section[data-testid="stSidebar"] > div {
+        padding-top: 1.6rem;
+    }
+
+    section[data-testid="stSidebar"] div[role="radiogroup"] {
+        gap: 7px;
+    }
+
+    section[data-testid="stSidebar"] div[role="radiogroup"] label {
+        background: #F7F8FC;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        padding: 9px 12px;
+        transition: all .18s ease;
+    }
+
+    section[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
+        background: #F0F1FF;
+        border-color: #E2E4FF;
+    }
+
+    section[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
+        background: linear-gradient(100deg, #EFEEFF, #F5F8FF);
+        border: 1px solid #DCDDFB;
+        box-shadow: inset 3px 0 0 #777CEB;
+    }
+
+    div[data-testid="stMetric"] {
+        background: linear-gradient(145deg, #FFFFFF 55%, #F7F6FF);
+        border: 1px solid #E7E8F6;
+        border-radius: 19px;
+        padding: 18px 19px 15px;
+        box-shadow: 0 7px 22px rgba(50, 55, 110, .055);
+        min-height: 122px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    div[data-testid="stHorizontalBlock"] > div:nth-child(1) div[data-testid="stMetric"] {
+        background: linear-gradient(145deg, #FFFFFF 52%, #F0EEFF);
+        border-color: #E4E0FF;
+    }
+    div[data-testid="stHorizontalBlock"] > div:nth-child(2) div[data-testid="stMetric"] {
+        background: linear-gradient(145deg, #FFFFFF 52%, #EAF7FF);
+        border-color: #DCEEF9;
+    }
+    div[data-testid="stHorizontalBlock"] > div:nth-child(3) div[data-testid="stMetric"] {
+        background: linear-gradient(145deg, #FFFFFF 52%, #EAF9F3);
+        border-color: #D9F0E6;
+    }
+    div[data-testid="stHorizontalBlock"] > div:nth-child(4) div[data-testid="stMetric"] {
+        background: linear-gradient(145deg, #FFFFFF 52%, #FFF2EC);
+        border-color: #F7E4DA;
+    }
+
+    div[data-testid="stMetricLabel"] {
+        color: #8189A2 !important;
+        font-size: .83rem !important;
+        font-weight: 650 !important;
+    }
+
+    div[data-testid="stMetricValue"] {
+        color: #343B70 !important;
+        font-weight: 800 !important;
+    }
+
+    div[data-testid="stMetricDelta"] {
+        font-weight: 650 !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background: rgba(255, 255, 255, .92);
+        border: 1px solid rgba(226, 230, 244, .95);
+        border-radius: 20px;
+        box-shadow: 0 7px 24px rgba(35, 48, 90, .045);
+        transition: box-shadow .2s ease, transform .2s ease;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+        box-shadow: 0 10px 28px rgba(65, 73, 145, .075);
+    }
+
+    .stButton > button {
+        border-radius: 11px;
+        border: 1px solid #E1E5F2;
+        background: #FFFFFF;
+        color: #46517D;
+        font-weight: 650;
+        padding: .55rem 1rem;
+        transition: all .18s ease;
+    }
+
+    .stButton > button:hover {
+        border-color: #AEB3F2;
+        background: #F0F1FF;
+        color: #5057BE;
+    }
+
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(110deg, #7377E5, #5B9FD2);
+        color: #FFFFFF;
+        border: 1px solid transparent;
+        box-shadow: 0 5px 13px rgba(104, 109, 218, .18);
+    }
+
+    .stButton > button[kind="primary"]:hover {
+        background: linear-gradient(110deg, #6267D4, #4C8FC4);
+        border-color: transparent;
+        color: #FFFFFF;
+        box-shadow: 0 7px 17px rgba(104, 109, 218, .25);
+    }
+
+    .stTextInput input, .stTextArea textarea, .stDateInput input {
+        border-radius: 11px !important;
+        border-color: #E1E5F0 !important;
+        background: #FFFFFF !important;
+    }
+
+    div[data-testid="stDataFrame"] {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, #777CEB 0%, #61B6D6 55%, #56C5A3 100%);
+        border-radius: 20px;
+    }
+
+    .stProgress > div > div {
+        background: #E9ECF7;
+        border-radius: 20px;
+    }
+
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 10px 10px 0 0;
+        color: #777F99;
+        font-weight: 650;
+    }
+
+    .stTabs [aria-selected="true"] {
+        color: #6268D5 !important;
+    }
+
+    div[data-testid="stAlert"] {
+        border-radius: 13px;
+    }
+
+    hr {
+        border-color: var(--line);
+    }
+
+    .hero {
+        position: relative;
+        overflow: hidden;
+        padding: 23px 27px 24px;
+        margin: 2px 0 22px 0;
+        border: 1px solid rgba(222, 224, 250, .9);
+        border-radius: 23px;
+        background:
+            radial-gradient(circle at 88% 15%, rgba(255,255,255,.9), transparent 20%),
+            linear-gradient(112deg, #F0EEFF 0%, #F2F7FF 48%, #EAF9F5 100%);
+        box-shadow: 0 9px 25px rgba(75, 81, 150, .055);
+    }
+
+    .hero:after {
+        content: "❤️‍🔥";
+        position: absolute;
+        right: 7%;
+        top: 8px;
+        color: rgba(112, 117, 218, .17);
+        font-size: 88px;
+        line-height: 1;
+        pointer-events: none;
+    }
+
+    .eyebrow {
+        color: #777CE0;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.7px;
+        text-transform: uppercase;
+        margin-bottom: 7px;
+    }
+
+    .hero-title {
+        color: #252B49;
+        font-size: clamp(27px, 3vw, 36px);
+        line-height: 1.15;
+        font-weight: 850;
+        letter-spacing: -1.4px;
+    }
+
+    .hero-subtitle {
+        color: #858CA3;
+        font-size: 14px;
+        margin-top: 8px;
+    }
+
+    .section-kicker {
+        color: #777CE0;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+    }
+
+    .mini-card {
+        background: #FFFFFF;
+        border: 1px solid #E9ECF5;
+        border-radius: 16px;
+        padding: 16px 18px;
+        box-shadow: 0 4px 16px rgba(35, 48, 90, .03);
+        min-height: 105px;
+    }
+
+    .colour-strip {
+        height: 5px;
+        border-radius: 20px;
+        margin: -2px 0 13px 0;
+        background: linear-gradient(90deg, #8A82EA, #72B9D8, #68C8A8, #F2B77B);
+    }
+
+    .status-pill {
+        display: inline-block;
+        padding: 4px 9px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: .2px;
+    }
+
+    .mini-card-label {
+        color: #858CA3;
+        font-size: 12px;
+        font-weight: 650;
+        margin-bottom: 7px;
+    }
+
+    .mini-card-value {
+        color: #343B70;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -.5px;
+    }
+
+    .mini-card-note {
+        color: #9299AF;
+        font-size: 11px;
+        margin-top: 4px;
+    }
+
+    @media (max-width: 768px) {
+        .block-container {
+            padding: 1rem;
+        }
+        div[data-testid="stMetric"] {
+            padding: 14px;
+        }
+        .hero {
+            padding: 19px;
+        }
+        .hero:after {
+            right: 3%;
+            font-size: 62px;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+def page_header(kicker, title, subtitle, emoji=""):
+    """Render a consistent page heading across the app."""
+    st.markdown(
+        f"""
+        <div class="hero">
+            <div class="eyebrow">{kicker}</div>
+            <div class="hero-title">{emoji} {title}</div>
+            <div class="hero-subtitle">{subtitle}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def section_label(text):
+    st.markdown(
+        f'<div class="section-kicker">{text}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def get_1d_series(df, col_name, fallback_val=""):
+    """Safely return a one-dimensional Series for a column."""
+    matching_cols = [
+        c for c in df.columns
+        if str(c).strip().lower() == str(col_name).strip().lower()
+    ]
+    if matching_cols:
+        series_obj = df[matching_cols[0]]
+        if isinstance(series_obj, pd.DataFrame):
+            return series_obj.iloc[:, 0]
+        return series_obj
+    return pd.Series([fallback_val] * len(df), index=df.index)
+
+
+def safe_date_string(value):
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    if pd.isna(value):
+        return None
+    return str(value)
+
+
+# =========================================================
+# DEFAULT DATASETS
+# =========================================================
 DEFAULT_SEMESTERS = pd.DataFrame({
     "Semester": [f"Semester {i}" for i in range(1, 9)],
     "Status": [
@@ -125,11 +513,7 @@ DEFAULT_SCORES = pd.DataFrame({
 
 DEFAULT_CHECKLIST = pd.DataFrame({
     "category": [
-        "Semester Preparation",
-        "Assessments",
-        "Projects",
-        "Documents",
-        "Placement",
+        "Semester Preparation", "Assessments", "Projects", "Documents", "Placement",
     ],
     "item": [
         "Download current syllabus",
@@ -139,19 +523,9 @@ DEFAULT_CHECKLIST = pd.DataFrame({
         "Complete one aptitude mock test",
     ],
     "target_date": [
-        "2026-11-03",
-        "2026-11-09",
-        "2026-11-12",
-        "2026-12-01",
-        "2026-11-15",
+        "2026-11-03", "2026-11-09", "2026-11-12", "2026-12-01", "2026-11-15",
     ],
-    "status": [
-        "Done",
-        "In Progress",
-        "Not Started",
-        "Not Started",
-        "Not Started",
-    ],
+    "status": ["Done", "In Progress", "Not Started", "Not Started", "Not Started"],
     "notes": [
         "Verified from university portal",
         "Revise trees and graphs",
@@ -161,28 +535,26 @@ DEFAULT_CHECKLIST = pd.DataFrame({
     ],
 })
 
-# ==========================================
-# BULLETPROOF DATA LOADER (SOLVES 1D GROUPER & KEYERROR)
-# ==========================================
+
+# =========================================================
+# LOCAL CSV HELPER (KEPT FOR COMPATIBILITY)
+# =========================================================
 def load_data_file(filename, default_df):
     path = os.path.join(DATA_DIR, filename)
     if os.path.exists(path):
         try:
             df = pd.read_csv(path)
-            # 1. Clean whitespace from all column names
             df.columns = [str(col).strip() for col in df.columns]
 
-            # 2. Case-insensitive column deduplication (keeps first occurrence)
             cols_lower = [c.lower() for c in df.columns]
             unique_indices = []
             seen = set()
-            for idx, c in enumerate(cols_lower):
-                if c not in seen:
-                    seen.add(c)
+            for idx, col in enumerate(cols_lower):
+                if col not in seen:
+                    seen.add(col)
                     unique_indices.append(idx)
             df = df.iloc[:, unique_indices]
 
-            # 3. Add default columns only if missing
             existing_lower = {c.lower(): c for c in df.columns}
             modified = False
             for col in default_df.columns:
@@ -195,48 +567,66 @@ def load_data_file(filename, default_df):
                         df[col] = default_df[col].iloc[0] if len(default_df) > 0 else ""
                     modified = True
 
-            # Drop any remaining exact duplicate headers
             df = df.loc[:, ~df.columns.duplicated(keep="first")]
-
             if modified:
                 df.to_csv(path, index=False)
             return df
         except Exception:
             return default_df.copy()
-    else:
-        default_df.to_csv(path, index=False)
-        return default_df.copy()
 
-# Check for either calendar filename
-calendar_filename = "academic_calendar.csv" if os.path.exists(os.path.join(DATA_DIR, "academic_calendar.csv")) else "calendar.csv"
+    default_df.to_csv(path, index=False)
+    return default_df.copy()
 
-semesters_df = load_data_file("semesters.csv", DEFAULT_SEMESTERS)
-courses_df = load_data_file("courses.csv", DEFAULT_COURSES)
-univ_syllabus_df = load_data_file("university_syllabus.csv", DEFAULT_UNIV_SYLLABUS)
-calendar_df = load_data_file(calendar_filename, DEFAULT_CALENDAR)
-assessments_df = load_data_file("assessments.csv", DEFAULT_ASSESSMENTS)
-scores_df = load_data_file("scores.csv", DEFAULT_SCORES)
-checklist_df = load_data_file("plan_checklist.csv", DEFAULT_CHECKLIST)
 
-# Standardize checklist headers to lowercase and force single dimensional columns
+# =========================================================
+# AUTHENTICATION + SUPABASE DATA
+# =========================================================
+if not show_authentication():
+    st.stop()
+
+backend = get_backend()
+logout_button()
+
+calendar_filename = (
+    "academic_calendar.csv"
+    if os.path.exists(os.path.join(DATA_DIR, "academic_calendar.csv"))
+    else "calendar.csv"
+)
+
+semesters_df = backend.load_dataframe("semesters", DEFAULT_SEMESTERS)
+courses_df = backend.load_dataframe("courses", DEFAULT_COURSES)
+univ_syllabus_df = backend.load_dataframe("university_syllabus", DEFAULT_UNIV_SYLLABUS)
+calendar_df = backend.load_dataframe("calendar", DEFAULT_CALENDAR)
+assessments_df = backend.load_dataframe("assessments", DEFAULT_ASSESSMENTS)
+scores_df = backend.load_dataframe("scores", DEFAULT_SCORES)
+checklist_df = backend.load_dataframe("plan_checklist", DEFAULT_CHECKLIST)
+
+if "target_date" in checklist_df.columns:
+    checklist_df["target_date"] = pd.to_datetime(
+        checklist_df["target_date"], errors="coerce"
+    ).dt.date
+
 checklist_df.columns = [str(c).strip().lower() for c in checklist_df.columns]
 checklist_df = checklist_df.loc[:, ~checklist_df.columns.duplicated(keep="first")]
 
-# Helper to safely extract a 1D series from any DataFrame
-def get_1d_series(df, col_name, fallback_val=""):
-    matching_cols = [c for c in df.columns if str(c).strip().lower() == str(col_name).strip().lower()]
-    if matching_cols:
-        series_obj = df[matching_cols[0]]
-        if isinstance(series_obj, pd.DataFrame):
-            return series_obj.iloc[:, 0]
-        return series_obj
-    return pd.Series([fallback_val] * len(df))
 
-# ==========================================
+# =========================================================
 # SIDEBAR NAVIGATION
-# ==========================================
-st.sidebar.title("🎓 Engineering Degree OS")
-st.sidebar.caption("Build small. Make it work. Launch it.")
+# =========================================================
+st.sidebar.markdown(
+    """
+    <div style="padding: 8px 0 18px 0;">
+        <div style="font-size: 30px;">🎓</div>
+        <div style="font-size: 21px; font-weight: 850; color: #303B70;">
+            Degree OS
+        </div>
+        <div style="font-size: 11px; color: #9299AF; letter-spacing: 1.2px;">
+            YOUR ACADEMIC WORKSPACE
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 st.sidebar.markdown("---")
 
 nav_options = [
@@ -253,349 +643,652 @@ nav_options = [
     "11. Data Admin",
 ]
 
-selected_tab = st.sidebar.radio("Navigation", nav_options)
+# Guarantee state resets to "1. Dashboard" if cleared on sign-out
+if "nav_selection" not in st.session_state:
+    st.session_state["nav_selection"] = "1. Dashboard"
+
+selected_tab = st.sidebar.radio("NAVIGATION", nav_options, key="nav_selection")
+
 st.sidebar.markdown("---")
-st.sidebar.info("💡 **Phase 7 Tip:** Use **Data Admin** to test live changes without touching code.")
+st.sidebar.caption("STUDENT WORKSPACE")
+st.sidebar.info("💡 Use **Data Admin** to manage your academic datasets.")
+st.sidebar.markdown(
+    """
+    <div style="padding: 12px 2px; color: #A0A6B8; font-size: 11px;">
+        MY ENGINEERING DEGREE OS<br>
+        <span style="color:#777CE0;">BUILD SMALL. MAKE IT WORK.</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-# ==========================================
-# TAB 1: DASHBOARD
-# ==========================================
+# =========================================================
+# TAB 1 — DASHBOARD
+# =========================================================
 if selected_tab == "1. Dashboard":
-    st.title("📊 Engineering Degree Dashboard")
-    st.markdown("Your central academic cockpit and degree progress metrics.")
+    page_header(
+        "YOUR ACADEMIC OVERVIEW",
+        "Welcome to your Degree OS",
+        "Your academic journey, progress and priorities — all in one place.",
+        "👋",
+    )
 
-    # Credits metric
-    target_series = pd.to_numeric(get_1d_series(semesters_df, "Target Credits", 0), errors="coerce").fillna(0)
-    completed_series = pd.to_numeric(get_1d_series(semesters_df, "Completed Credits", 0), errors="coerce").fillna(0)
+    target_series = pd.to_numeric(
+        get_1d_series(semesters_df, "Target Credits", 0), errors="coerce"
+    ).fillna(0)
+    completed_series = pd.to_numeric(
+        get_1d_series(semesters_df, "Completed Credits", 0), errors="coerce"
+    ).fillna(0)
+
     total_target = target_series.sum() if target_series.sum() > 0 else 158
     total_completed = completed_series.sum()
-    pct = round((total_completed / total_target) * 100, 1)
+    pct = round((total_completed / total_target) * 100, 1) if total_target else 0
 
-    # Current semester
     status_series = get_1d_series(semesters_df, "Status", "").astype(str).str.lower()
     in_prog = semesters_df[status_series == "in progress"]
-    current_sem = "Semester 4"
+    current_sem = "Not set"
     if not in_prog.empty:
-        current_sem = str(in_prog.iloc[0].get("Semester", "Semester 4"))
+        current_sem = str(in_prog.iloc[0].get("Semester", "Not set"))
 
-    # Next assessment
     next_assessment = "None scheduled"
     if not assessments_df.empty:
         as_copy = assessments_df.copy()
-        date_col = get_1d_series(as_copy, "Date", "")
-        as_copy["PDate"] = pd.to_datetime(date_col, errors="coerce")
+        as_copy["PDate"] = pd.to_datetime(
+            get_1d_series(as_copy, "Date", ""), errors="coerce"
+        )
         upcoming = as_copy[as_copy["PDate"] >= today_dt].sort_values("PDate")
         if not upcoming.empty:
-            next_assessment = f"{upcoming.iloc[0].get('Assessment Name', 'Assessment')} ({upcoming.iloc[0].get('Date')})"
-        elif len(as_copy) > 0:
-            next_assessment = f"{as_copy.iloc[0].get('Assessment Name', 'Assessment')} ({as_copy.iloc[0].get('Date')})"
+            next_assessment = (
+                f"{upcoming.iloc[0].get('Assessment Name', 'Assessment')} "
+                f"({upcoming.iloc[0].get('Date')})"
+            )
 
-    # Next holiday
     next_holiday = "None scheduled"
     if not calendar_df.empty:
         cal_copy = calendar_df.copy()
         type_col = get_1d_series(cal_copy, "Type", "").astype(str).str.lower()
-        date_col = get_1d_series(cal_copy, "Date", "")
-        cal_copy["PDate"] = pd.to_datetime(date_col, errors="coerce")
+        cal_copy["PDate"] = pd.to_datetime(
+            get_1d_series(cal_copy, "Date", ""), errors="coerce"
+        )
         leaves = cal_copy[type_col.str.contains("leave|holiday", na=False)]
         upcoming_leaves = leaves[leaves["PDate"] >= today_dt].sort_values("PDate")
         if not upcoming_leaves.empty:
-            next_holiday = f"{upcoming_leaves.iloc[0].get('Event Title', 'Holiday')} ({upcoming_leaves.iloc[0].get('Date')})"
-        elif not leaves.empty:
-            next_holiday = f"{leaves.iloc[0].get('Event Title', 'Holiday')} ({leaves.iloc[0].get('Date')})"
+            next_holiday = (
+                f"{upcoming_leaves.iloc[0].get('Event Title', 'Holiday')} "
+                f"({upcoming_leaves.iloc[0].get('Date')})"
+            )
 
-    # Score calculation
-    obt_series = pd.to_numeric(get_1d_series(scores_df, "Obtained Score", 0), errors="coerce").fillna(0)
-    max_series = pd.to_numeric(get_1d_series(scores_df, "Max Marks", get_1d_series(scores_df, "Max Score", 0)), errors="coerce").fillna(0)
-    prototype_avg = 0.0
-    if max_series.sum() > 0:
-        prototype_avg = round((obt_series.sum() / max_series.sum()) * 100, 2)
+    obtained_scores = pd.to_numeric(
+        get_1d_series(scores_df, "Obtained Score", 0), errors="coerce"
+    ).fillna(0)
+    maximum_scores = pd.to_numeric(
+        get_1d_series(
+            scores_df, "Max Marks",
+            get_1d_series(scores_df, "Max Score", 0)
+        ),
+        errors="coerce",
+    ).fillna(0)
+    prototype_avg = (
+        round((obtained_scores.sum() / maximum_scores.sum()) * 100, 2)
+        if maximum_scores.sum() > 0 else 0.0
+    )
 
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Current Semester", current_sem)
-    c2.metric("Degree Completion", f"{pct}%", f"{int(total_completed)}/{int(total_target)} Credits")
-    c3.metric("Next Assessment", next_assessment)
-    c4.metric("Prototype Score %", f"{prototype_avg}%")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Current Semester", current_sem)
+    m2.metric("Degree Completion", f"{pct}%", f"{int(total_completed)} / {int(total_target)} credits")
+    m3.metric("Next Assessment", next_assessment)
+    m4.metric("Prototype Score", f"{prototype_avg}%")
 
-    st.markdown("---")
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.subheader("🗓️ Next Academic Event / Break")
-        st.info(f"**Upcoming Leave/Holiday:** {next_holiday}")
-        
-        st.subheader("📋 Checklist Quick Health")
-        chk_status = get_1d_series(checklist_df, "status", "")
-        if not chk_status.empty and (chk_status != "").any():
-            st.bar_chart(chk_status.value_counts())
-        else:
-            st.info("No checklist data available.")
+    st.markdown("")
+    left, right = st.columns([1.15, 0.85], gap="large")
+
+    with left:
+        with st.container(border=True):
+            section_label("DEGREE JOURNEY")
+            st.subheader("Your progress so far")
+            st.write(f"**{pct}%** of the target credits recorded as completed")
+            st.progress(min(max(pct / 100, 0), 1))
+            st.caption(
+                f"{int(total_completed)} completed credits out of "
+                f"{int(total_target)} target credits."
+            )
+
+        with st.container(border=True):
+            section_label("SEMESTER ROADMAP")
+            st.subheader("Your eight-semester journey")
+            roadmap = semesters_df.copy()
+            for _, row in roadmap.iterrows():
+                sem_name = row.get("Semester", "Semester")
+                completed = pd.to_numeric(row.get("Completed Credits", 0), errors="coerce")
+                target = pd.to_numeric(row.get("Target Credits", 0), errors="coerce")
+                completed = 0 if pd.isna(completed) else completed
+                target = 0 if pd.isna(target) else target
+                ratio = min(completed / target, 1) if target > 0 else 0
+                st.markdown(f"**{sem_name}** · {row.get('Status', 'N/A')}")
+                st.progress(ratio)
+                st.caption(f"{completed:g} / {target:g} credits · {row.get('Focus Area', '')}")
+
+    with right:
+        with st.container(border=True):
+            section_label("UP NEXT")
+            st.subheader("Academic priorities")
+            st.markdown("**📝 Next assessment**")
+            st.write(next_assessment)
+            st.divider()
+            st.markdown("**🌿 Next holiday / break**")
+            st.write(next_holiday)
+
+        with st.container(border=True):
+            section_label("CHECKLIST HEALTH")
+            st.subheader("Task status")
             
-    with col_b:
-        st.subheader("📈 Degree Semesters Roadmap")
-        st.dataframe(semesters_df, use_container_width=True)
+            chk_status = (
+                get_1d_series(checklist_df, "status", "")
+                .astype(str)
+                .str.strip()
+                .str.lower()
+            )
 
-# ==========================================
-# TAB 2: SEMESTERS 1-8 (PHASE 4)
-# ==========================================
+            if not chk_status.empty and (chk_status != "").any():
+
+                normalized_status = chk_status.replace({
+                    "completed": "Done",
+                    "done": "Done",
+                    "in progress": "In Progress",
+                    "not started": "Not Started",
+                })
+
+                status_order = ["Done", "In Progress", "Not Started"]
+
+                status_counts = (
+                    normalized_status
+                    .value_counts()
+                    .reindex(status_order, fill_value=0)
+                )
+
+                chart_df = pd.DataFrame({
+                    "Task Status": status_counts.index,
+                    "Tasks": status_counts.values,
+                })
+
+                chart_df = chart_df[chart_df["Tasks"] > 0]
+
+                if not chart_df.empty:
+                    color_map = {
+                        "Done": "#55B99A",
+                        "In Progress": "#8582E8",
+                        "Not Started": "#F0AD78",
+                    }
+
+                    fig = px.pie(
+                        chart_df,
+                        names="Task Status",
+                        values="Tasks",
+                        hole=0.65,
+                        color="Task Status",
+                        color_discrete_map=color_map,
+                    )
+
+                    fig.update_traces(
+                        textposition="outside",
+                        textinfo="label+value",
+                        marker=dict(
+                            line=dict(color="#FFFFFF", width=4)
+                        ),
+                        hovertemplate=(
+                            "<b>%{label}</b><br>"
+                            "Tasks: %{value}<br>"
+                            "Share: %{percent}"
+                            "<extra></extra>"
+                        ),
+                    )
+
+                    fig.update_layout(
+                        showlegend=True,
+                        legend_title_text="Task Status",
+                        height=300,
+                        margin=dict(l=10, r=10, t=15, b=10),
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        font=dict(
+                            family="Arial",
+                            color="#343B70",
+                            size=12,
+                        ),
+                    )
+
+                    st.plotly_chart(
+                        fig,
+                        use_container_width=True,
+                        config={"displayModeBar": False},
+                    )
+
+                else:
+                    st.info("No checklist data available.")
+
+            else:
+                st.info("No checklist data available.")
+
+
+    with st.container(border=True):
+        section_label("ACADEMIC SNAPSHOT")
+        st.subheader("Semester overview")
+        st.dataframe(semesters_df, use_container_width=True, hide_index=True)
+
+
+# =========================================================
+# TAB 2 — SEMESTERS 1–8
+# =========================================================
 elif selected_tab == "2. Semesters 1-8":
-    st.title("📚 Semesters 1 to 8 Overview")
-    st.markdown("All eight degree semesters represented with milestones, credits, and status.")
+    page_header(
+        "DEGREE ROADMAP",
+        "Semesters 1–8",
+        "Explore milestones, credit progress and the focus area for each semester.",
+        "📚",
+    )
 
-    for i in range(0, len(semesters_df), 4):
-        cols = st.columns(4)
-        for j in range(4):
+    for i in range(0, len(semesters_df), 2):
+        cols = st.columns(2, gap="large")
+        for j in range(2):
             if i + j < len(semesters_df):
                 row = semesters_df.iloc[i + j]
                 with cols[j]:
                     with st.container(border=True):
-                        st.markdown(f"### {row.get('Semester', f'Semester {i+j+1}')}")
-                        st.markdown(f"**Status:** `{row.get('Status', 'N/A')}`")
-                        st.markdown(f"**Credits:** {row.get('Completed Credits', 0)} / {row.get('Target Credits', 0)}")
-                        st.caption(f"🎯 {row.get('Focus Area', '')}")
+                        sem_name = row.get("Semester", f"Semester {i+j+1}")
+                        status = row.get("Status", "N/A")
+                        status_text = str(status).strip().lower()
+                        if status_text == "completed":
+                            pill_bg, pill_fg, status_icon = "#E5F7EF", "#21845D", "✓"
+                        elif status_text == "in progress":
+                            pill_bg, pill_fg, status_icon = "#EEEFFF", "#6268C9", "◉"
+                        else:
+                            pill_bg, pill_fg, status_icon = "#FFF2E7", "#B87935", "○"
+                        st.markdown('<div class="colour-strip"></div>', unsafe_allow_html=True)
+                        completed = pd.to_numeric(row.get("Completed Credits", 0), errors="coerce")
+                        target = pd.to_numeric(row.get("Target Credits", 0), errors="coerce")
+                        completed = 0 if pd.isna(completed) else completed
+                        target = 0 if pd.isna(target) else target
+                        ratio = min(completed / target, 1) if target > 0 else 0
 
-    st.markdown("---")
-    st.subheader("🔍 Inspect Semester Curriculum")
-    sem_col = get_1d_series(semesters_df, "Semester", "")
-    all_sems = [s for s in sem_col.tolist() if s] or [f"Semester {i}" for i in range(1, 9)]
-    sem_choice = st.selectbox("Select Semester", all_sems)
-    
-    courses_sem_col = get_1d_series(courses_df, "Semester", "")
-    filtered = courses_df[courses_sem_col == sem_choice]
-    st.dataframe(filtered, use_container_width=True)
+                        st.markdown(f"### {sem_name}")
+                        st.caption(str(row.get("Focus Area", "")))
+                        st.markdown(
+                            f'<span class="status-pill" style="background:{pill_bg};color:{pill_fg};">'
+                            f'{status_icon} {status}</span>',
+                            unsafe_allow_html=True,
+                        )
+                        st.progress(ratio)
+                        st.caption(f"{completed:g} / {target:g} credits completed")
 
-# ==========================================
-# TAB 3: COURSES & SYLLABUS (PHASE 4)
-# ==========================================
+    st.markdown("")
+    with st.container(border=True):
+        section_label("CURRICULUM INSPECTOR")
+        st.subheader("Inspect semester courses")
+        all_sems = get_1d_series(semesters_df, "Semester", "").dropna().tolist()
+        all_sems = [s for s in all_sems if s] or [f"Semester {i}" for i in range(1, 9)]
+        sem_choice = st.selectbox("Choose a semester", all_sems)
+        filtered = courses_df[
+            get_1d_series(courses_df, "Semester", "") == sem_choice
+        ]
+        st.dataframe(filtered, use_container_width=True, hide_index=True)
+
+
+# =========================================================
+# TAB 3 — COURSES & SYLLABUS
+# =========================================================
 elif selected_tab == "3. Courses & Syllabus":
-    st.title("📖 Courses & Syllabus")
-    st.markdown("Filter courses across semesters to verify topics and credit allocations.")
+    page_header(
+        "LEARNING LIBRARY",
+        "Courses & Syllabus",
+        "Browse course details, topics and credit allocations by semester.",
+        "📖",
+    )
 
-    course_sems = sorted(get_1d_series(courses_df, "Semester", "").dropna().unique().tolist())
-    selected_sem = st.selectbox("Select Semester (Verify table updates dynamically)", ["All"] + course_sems)
+    course_sems = sorted(
+        get_1d_series(courses_df, "Semester", "").dropna().unique().tolist()
+    )
+    selected_sem = st.selectbox("Filter by semester", ["All"] + course_sems)
 
     display_df = courses_df.copy()
     if selected_sem != "All":
-        sem_series = get_1d_series(display_df, "Semester", "")
-        display_df = display_df[sem_series == selected_sem]
+        display_df = display_df[
+            get_1d_series(display_df, "Semester", "") == selected_sem
+        ]
 
-    st.dataframe(display_df, use_container_width=True)
-    if not display_df.empty:
-        st.caption(f"Showing {len(display_df)} course(s) for selection: **{selected_sem}**")
+    a, b = st.columns(2)
+    a.metric("Courses displayed", len(display_df))
+    credit_total = pd.to_numeric(
+        get_1d_series(display_df, "Credits", 0), errors="coerce"
+    ).fillna(0).sum()
+    b.metric("Credits in view", int(credit_total))
 
-# ==========================================
-# TAB 4: UNIVERSITY SYLLABUS (PHASE 4)
-# ==========================================
+    with st.container(border=True):
+        st.dataframe(display_df, use_container_width=True, hide_index=True)
+    st.caption(f"Showing {len(display_df)} course(s) for: {selected_sem}")
+
+
+# =========================================================
+# TAB 4 — UNIVERSITY SYLLABUS
+# =========================================================
 elif selected_tab == "4. University Syllabus":
-    st.title("🏛️ University Syllabus Reference")
-    st.markdown("Programme-level summary and official handbook reference. *(No invented regulations)*.")
+    page_header(
+        "REFERENCE CENTRE",
+        "University Syllabus",
+        "Programme-level information and the syllabus reference stored in your workspace.",
+        "🏛️",
+    )
 
     if not univ_syllabus_df.empty:
         row = univ_syllabus_df.iloc[0]
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Degree Programme", str(row.get("Programme", "N/A")))
-            st.metric("Total Semesters", str(row.get("Total Semesters", "8")))
-        with col2:
-            st.metric("Expected Total Credits", str(row.get("Total Credits Required", "158")))
-            st.metric("Curriculum Version", str(row.get("Curriculum Version", "N/A")))
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Total semesters", str(row.get("Total Semesters", "8")))
+        c2.metric("Total credits required", str(row.get("Total Credits Required", "N/A")))
+        c3.metric("Curriculum version", str(row.get("Curriculum Version", "N/A")))
 
-        st.markdown("---")
-        st.subheader("Official Syllabus Source / Reference")
-        st.code(str(row.get("Syllabus Source / Reference", "University Handbook v4.2")), language="text")
+        with st.container(border=True):
+            section_label("PROGRAMME")
+            st.subheader(str(row.get("Programme", "N/A")))
+            st.write(str(row.get("Program Overview", "No programme overview available.")))
 
-        st.subheader("Program Overview")
-        st.info(str(row.get("Program Overview", "Curriculum handbook outline.")))
-        st.dataframe(univ_syllabus_df, use_container_width=True)
+        with st.container(border=True):
+            section_label("SOURCE / REFERENCE")
+            st.code(
+                str(row.get("Syllabus Source / Reference", "No source recorded.")),
+                language="text",
+            )
+            st.caption("Check the institution's official portal to verify current regulations.")
+
+        with st.container(border=True):
+            st.subheader("Stored syllabus record")
+            st.dataframe(univ_syllabus_df, use_container_width=True, hide_index=True)
     else:
         st.warning("University syllabus record is empty.")
 
-# ==========================================
-# TAB 5: ACADEMIC / LEAVE CALENDAR (PHASE 4)
-# ==========================================
+
+# =========================================================
+# TAB 5 — ACADEMIC / LEAVE CALENDAR
+# =========================================================
 elif selected_tab == "5. Academic / Leave Calendar":
-    st.title("🗓️ Academic & Leave Calendar")
-    st.markdown("Academic events, internal assessments, and holidays coexist with clear filtering.")
+    page_header(
+        "DATES THAT MATTER",
+        "Academic & Leave Calendar",
+        "Keep academic events, assessments and breaks in one organised view.",
+        "🗓️",
+    )
 
     col1, col2 = st.columns(2)
+    years = sorted(get_1d_series(calendar_df, "Academic Year", "").dropna().unique().tolist())
+    sems = sorted(get_1d_series(calendar_df, "Semester", "").dropna().unique().tolist())
+
     with col1:
-        years = sorted(get_1d_series(calendar_df, "Academic Year", "").dropna().unique().tolist())
-        year_filter = st.selectbox("Filter by Academic Year", ["All"] + years)
+        year_filter = st.selectbox("Academic year", ["All"] + years)
     with col2:
-        sems = sorted(get_1d_series(calendar_df, "Semester", "").dropna().unique().tolist())
-        sem_filter = st.selectbox("Filter by Semester", ["All"] + sems)
+        sem_filter = st.selectbox("Semester", ["All"] + sems)
 
     cal_view = calendar_df.copy()
     if year_filter != "All":
-        y_col = get_1d_series(cal_view, "Academic Year", "")
-        cal_view = cal_view[y_col == year_filter]
+        cal_view = cal_view[get_1d_series(cal_view, "Academic Year", "") == year_filter]
     if sem_filter != "All":
-        s_col = get_1d_series(cal_view, "Semester", "")
-        cal_view = cal_view[s_col == sem_filter]
+        cal_view = cal_view[get_1d_series(cal_view, "Semester", "") == sem_filter]
 
-    st.dataframe(cal_view, use_container_width=True)
+    with st.container(border=True):
+        section_label("EVENT SCHEDULE")
+        st.subheader(f"{len(cal_view)} event(s)")
+        if not cal_view.empty:
+            st.dataframe(cal_view, use_container_width=True, hide_index=True)
+        else:
+            st.info("No events match these filters.")
 
-# ==========================================
-# TAB 6: INTERNAL ASSESSMENTS (PHASE 4)
-# ==========================================
+
+# =========================================================
+# TAB 6 — INTERNAL ASSESSMENTS
+# =========================================================
 elif selected_tab == "6. Internal Assessments":
-    st.title("📝 Internal Assessments & Evaluations")
-    st.markdown("Tracks IA1, IA2, assignments, lab reviews, and semester examinations.")
+    page_header(
+        "ASSESSMENT CENTRE",
+        "Internal Assessments",
+        "Track IA tests, assignments, lab reviews and examination marks.",
+        "📝",
+    )
 
-    st.dataframe(assessments_df, use_container_width=True)
-    max_m = pd.to_numeric(get_1d_series(assessments_df, "Max Marks", 0), errors="coerce").fillna(0)
-    obt_m = pd.to_numeric(get_1d_series(assessments_df, "Obtained Marks", 0), errors="coerce").fillna(0)
-    
-    t_max = max_m.sum()
-    t_obt = obt_m.sum()
-    pct_secured = round((t_obt / t_max) * 100, 1) if t_max > 0 else 0
-    st.metric("Total Assessment Marks Secured", f"{int(t_obt)} / {int(t_max)}", f"{pct_secured}%")
+    max_m = pd.to_numeric(
+        get_1d_series(assessments_df, "Max Marks", 0), errors="coerce"
+    ).fillna(0)
+    obt_m = pd.to_numeric(
+        get_1d_series(assessments_df, "Obtained Marks", 0), errors="coerce"
+    ).fillna(0)
+    total_max = max_m.sum()
+    total_obt = obt_m.sum()
+    pct_secured = round((total_obt / total_max) * 100, 1) if total_max > 0 else 0
 
-# ==========================================
-# TAB 7: STATUS TRACKER (PHASE 5)
-# ==========================================
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Recorded assessments", len(assessments_df))
+    c2.metric("Marks recorded", f"{total_obt:g} / {total_max:g}")
+    c3.metric("Recorded percentage", f"{pct_secured}%")
+
+    with st.container(border=True):
+        section_label("ASSESSMENT REGISTER")
+        st.dataframe(assessments_df, use_container_width=True, hide_index=True)
+
+
+# =========================================================
+# TAB 7 — STATUS TRACKER
+# =========================================================
 elif selected_tab == "7. Status Tracker":
-    st.title("📋 Academic Status Tracker")
-    st.markdown("Track completion and progress by semester.")
+    page_header(
+        "PROGRESS MONITOR",
+        "Academic Status Tracker",
+        "See how your courses are progressing within a selected semester.",
+        "📋",
+    )
 
-    course_sems = sorted(get_1d_series(courses_df, "Semester", "").dropna().unique().tolist()) or [f"Semester {i}" for i in range(1, 9)]
-    target_sem = st.selectbox("Select Semester to Track", course_sems, index=min(2, len(course_sems)-1))
+    course_sems = sorted(
+        get_1d_series(courses_df, "Semester", "").dropna().unique().tolist()
+    ) or [f"Semester {i}" for i in range(1, 9)]
 
-    sem_courses = courses_df[get_1d_series(courses_df, "Semester", "") == target_sem].copy()
-    status_series = get_1d_series(sem_courses, "Status", "").astype(str)
+    target_sem = st.selectbox(
+        "Select semester to track",
+        course_sems,
+        index=min(2, len(course_sems) - 1),
+    )
 
-    c_completed = (status_series == "Completed").sum()
-    c_in_progress = (status_series == "In Progress").sum()
-    c_not_started = (status_series == "Not Started").sum()
-    total_sem_courses = len(sem_courses)
+    sem_courses = courses_df[
+        get_1d_series(courses_df, "Semester", "") == target_sem
+    ].copy()
+    status_series = get_1d_series(sem_courses, "Status", "").astype(str).str.lower()
+
+    completed_count = (status_series == "completed").sum()
+    in_progress_count = (status_series == "in progress").sum()
+    not_started_count = (status_series == "not started").sum()
+    total_courses = len(sem_courses)
 
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Total Courses", total_sem_courses)
-    c2.metric("Completed", c_completed)
-    c3.metric("In Progress", c_in_progress)
-    c4.metric("Not Started", c_not_started)
+    c1.metric("Total courses", total_courses)
+    c2.metric("Completed", completed_count)
+    c3.metric("In progress", in_progress_count)
+    c4.metric("Not started", not_started_count)
 
-    progress_ratio = (c_completed / total_sem_courses) if total_sem_courses > 0 else 0.0
-    st.write(f"**{target_sem} Completion Progress ({round(progress_ratio * 100, 1)}%)**")
-    st.progress(progress_ratio)
+    progress_ratio = completed_count / total_courses if total_courses else 0
+    with st.container(border=True):
+        section_label("SEMESTER COMPLETION")
+        st.subheader(f"{target_sem}: {round(progress_ratio * 100, 1)}% complete")
+        st.progress(progress_ratio)
+        st.dataframe(sem_courses, use_container_width=True, hide_index=True)
 
-    st.markdown("---")
-    st.subheader(f"Courses for {target_sem}")
-    st.dataframe(sem_courses, use_container_width=True)
 
-# ==========================================
-# TAB 8: SCORECARD (PHASE 5)
-# ==========================================
+# =========================================================
+# TAB 8 — SCORECARD
+# =========================================================
 elif selected_tab == "8. Scorecard":
-    st.title("🏆 Academic Scorecard & Grades")
-    st.markdown("Course-wise grades and simple percentage calculated from loaded sample data.")
-
-    st.dataframe(scores_df, use_container_width=True)
-
-    obt = pd.to_numeric(get_1d_series(scores_df, "Obtained Score", 0), errors="coerce").fillna(0)
-    max_m = pd.to_numeric(get_1d_series(scores_df, "Max Marks", get_1d_series(scores_df, "Max Score", 0)), errors="coerce").fillna(0)
-
-    sum_obt = obt.sum()
-    sum_max = max_m.sum()
-    simple_pct = round((sum_obt / sum_max) * 100, 2) if sum_max > 0 else 0.0
-
-    st.markdown("---")
-    st.metric(
-        label="prototype score percentage",
-        value=f"{simple_pct}%",
-        help="Calculated as: (Total Obtained Marks / Total Max Marks) * 100."
+    page_header(
+        "PERFORMANCE OVERVIEW",
+        "Academic Scorecard",
+        "Review recorded marks and course-wise grades in your workspace.",
+        "🏆",
     )
-    st.warning("⚠️ **Important:** This is a **prototype score percentage**, NOT an official university CGPA formula. Official CGPA regulations are not applied without validated institutional rules.")
 
-# ==========================================
-# TAB 9: PLAN & CHECKLIST (PHASE 5)
-# ==========================================
+    obtained = pd.to_numeric(
+        get_1d_series(scores_df, "Obtained Score", 0), errors="coerce"
+    ).fillna(0)
+    maximum = pd.to_numeric(
+        get_1d_series(
+            scores_df, "Max Marks",
+            get_1d_series(scores_df, "Max Score", 0)
+        ),
+        errors="coerce",
+    ).fillna(0)
+
+    sum_obtained = obtained.sum()
+    sum_maximum = maximum.sum()
+    simple_pct = round((sum_obtained / sum_maximum) * 100, 2) if sum_maximum > 0 else 0.0
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Courses with scores", len(scores_df))
+    c2.metric("Marks recorded", f"{sum_obtained:g} / {sum_maximum:g}")
+    c3.metric("Prototype percentage", f"{simple_pct}%")
+
+    with st.container(border=True):
+        section_label("COURSE PERFORMANCE")
+        st.dataframe(scores_df, use_container_width=True, hide_index=True)
+
+    st.warning(
+        "This is a prototype score percentage, NOT an official university CGPA. "
+        "Official CGPA regulations are not applied without validated institutional rules."
+    )
+
+
+# =========================================================
+# TAB 9 — PLAN & CHECKLIST
+# =========================================================
 elif selected_tab == "9. Plan & Checklist":
-    st.title("✅ Degree Execution Plan & Checklist")
-    st.markdown("Your degree execution control panel. Manage weekly tasks, milestones, and preparation.")
+    page_header(
+        "PERSONAL EXECUTION PLAN",
+        "Plan & Checklist",
+        "Organise semester preparation, assignments, projects and placement tasks.",
+        "✅",
+    )
 
     checklist_work = checklist_df.copy()
-    date_col = get_1d_series(checklist_work, "target_date", "")
-    checklist_work["p_date"] = pd.to_datetime(date_col, errors="coerce")
+    checklist_work["p_date"] = pd.to_datetime(
+        get_1d_series(checklist_work, "target_date", ""), errors="coerce"
+    )
     status_col = get_1d_series(checklist_work, "status", "").astype(str).str.lower()
-    
+
     total_items = len(checklist_work)
     done_count = (status_col == "done").sum()
     not_done = checklist_work[status_col != "done"]
-    
-    not_done_dates = pd.to_datetime(get_1d_series(not_done, "target_date", ""), errors="coerce")
+    not_done_dates = pd.to_datetime(
+        get_1d_series(not_done, "target_date", ""), errors="coerce"
+    )
     overdue_count = (not_done_dates < today_dt).sum()
-    due_soon_count = ((not_done_dates >= today_dt) & (not_done_dates <= (today_dt + pd.Timedelta(days=7)))).sum()
+    due_soon_count = (
+        (not_done_dates >= today_dt)
+        & (not_done_dates <= today_dt + pd.Timedelta(days=7))
+    ).sum()
 
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Total Checklist Items", total_items)
-    m2.metric("Done", done_count)
-    m3.metric("Due Soon (Next 7 Days)", due_soon_count)
+    m1.metric("Total tasks", total_items)
+    m2.metric("Completed", done_count)
+    m3.metric("Due in 7 days", due_soon_count)
     m4.metric("Overdue", overdue_count)
 
-    st.markdown("---")
-    st.subheader("Interactive Plan Editor")
-    st.caption("Allowed status values: `Not Started` | `In Progress` | `Done`")
+    with st.container(border=True):
+        section_label("TASK MANAGER")
+        st.subheader("Edit your checklist")
+        st.caption("Allowed status values: Not Started · In Progress · Done")
 
-    edited_checklist = st.data_editor(
-        checklist_df,
-        column_config={
-            "status": st.column_config.SelectboxColumn(
-                "Status",
-                options=["Not Started", "In Progress", "Done"],
-                required=True,
-            ),
-            "target_date": st.column_config.DateColumn("Target Date"),
-            "category": st.column_config.SelectboxColumn(
-                "Category",
-                options=[
-                    "Semester Preparation",
-                    "Assessments",
-                    "Labs",
-                    "Projects",
-                    "Documents",
-                    "Skills",
-                    "Placement",
-                ],
-            ),
-        },
-        num_rows="dynamic",
-        use_container_width=True,
-        key="checklist_editor",
+        edited_checklist = st.data_editor(
+            checklist_df,
+            column_config={
+                "status": st.column_config.SelectboxColumn(
+                    "Status",
+                    options=["Not Started", "In Progress", "Done"],
+                    required=True,
+                ),
+                "target_date": st.column_config.DateColumn("Target Date"),
+                "category": st.column_config.SelectboxColumn(
+                    "Category",
+                    options=[
+                        "Semester Preparation", "Assessments", "Labs",
+                        "Projects", "Documents", "Skills", "Placement",
+                    ],
+                ),
+            },
+            num_rows="dynamic",
+            use_container_width=True,
+            hide_index=True,
+            key="checklist_editor",
+        )
+
+        if st.button("Save Plan & Checklist", type="primary", key="save_checklist"):
+            clean_save = edited_checklist.loc[
+                :, ~edited_checklist.columns.duplicated(keep="first")
+            ].copy()
+            if "target_date" in clean_save.columns:
+                clean_save["target_date"] = clean_save["target_date"].apply(safe_date_string)
+            backend.save_dataframe("plan_checklist", clean_save)
+            st.success("Changes saved to your Supabase account.")
+            st.rerun()
+
+    st.markdown("")
+    section_label("FOCUS VIEWS")
+    tab_week, tab_sem, tab_degree = st.tabs(
+        ["⚡ This Week", "🎯 Semester Milestones", "🚀 Degree & Placement"]
     )
 
-    if st.button("💾 Save Plan & Checklist", type="primary"):
-        clean_save = edited_checklist.loc[:, ~edited_checklist.columns.duplicated(keep="first")]
-        clean_save.to_csv(os.path.join(DATA_DIR, "plan_checklist.csv"), index=False)
-        st.success("✅ Changes saved to `data/plan_checklist.csv`!")
-        st.rerun()
-
-    st.markdown("---")
-    st.subheader("Execution Focus Views")
-    tab_week, tab_sem, tab_deg = st.tabs(["⚡ This Week (Due <= 7 Days)", "🎯 Semester Milestones", "🚀 Degree & Placement"])
-    
     with tab_week:
-        this_week = checklist_work[(checklist_work["p_date"] >= today_dt) & (checklist_work["p_date"] <= (today_dt + pd.Timedelta(days=7)))]
-        st.dataframe(this_week[["category", "item", "target_date", "status", "notes"]], use_container_width=True)
+        this_week = checklist_work[
+            (checklist_work["p_date"] >= today_dt)
+            & (checklist_work["p_date"] <= today_dt + pd.Timedelta(days=7))
+        ]
+        st.dataframe(
+            this_week[["category", "item", "target_date", "status", "notes"]],
+            use_container_width=True,
+            hide_index=True,
+        )
+
     with tab_sem:
-        cats = get_1d_series(checklist_work, "category", "")
-        sem_tasks = checklist_work[cats.isin(["Semester Preparation", "Assessments", "Labs", "Projects"])]
-        st.dataframe(sem_tasks[["category", "item", "target_date", "status", "notes"]], use_container_width=True)
-    with tab_deg:
-        cats = get_1d_series(checklist_work, "category", "")
-        deg_tasks = checklist_work[cats.isin(["Documents", "Skills", "Placement"])]
-        st.dataframe(deg_tasks[["category", "item", "target_date", "status", "notes"]], use_container_width=True)
+        categories = get_1d_series(checklist_work, "category", "")
+        sem_tasks = checklist_work[
+            categories.isin(["Semester Preparation", "Assessments", "Labs", "Projects"])
+        ]
+        st.dataframe(
+            sem_tasks[["category", "item", "target_date", "status", "notes"]],
+            use_container_width=True,
+            hide_index=True,
+        )
 
-# ==========================================
-# TAB 10: ASK DEGREE AI (PHASE 6)
-# ==========================================
+    with tab_degree:
+        categories = get_1d_series(checklist_work, "category", "")
+        degree_tasks = checklist_work[
+            categories.isin(["Documents", "Skills", "Placement"])
+        ]
+        st.dataframe(
+            degree_tasks[["category", "item", "target_date", "status", "notes"]],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+
+# =========================================================
+# TAB 10 — ASK DEGREE AI
+# =========================================================
 elif selected_tab == "10. Ask Degree AI":
-    st.title("🤖 Ask Degree AI")
-    st.markdown("Ground-truth degree assistant answering strictly from your academic datasets.")
+    page_header(
+        "YOUR ACADEMIC COPILOT",
+        "Ask Degree AI",
+        "Ask questions about the academic information stored in your Degree OS.",
+        "🤖",
+    )
 
-    api_key = st.secrets.get("GEMINI_API_KEY", os.environ.get("GEMINI_API_KEY", ""))
+    api_key = st.secrets.get(
+        "GEMINI_API_KEY",
+        os.environ.get("GEMINI_API_KEY", ""),
+    )
 
     context_data = f"""
 Degree Data Source of Truth:
+
 [SEMESTERS]
 {semesters_df.to_string(index=False)}
 
@@ -615,146 +1308,209 @@ Degree Data Source of Truth:
 {checklist_df.to_string(index=False)}
 """
 
-    st.markdown("**Quick Questions:**")
-    qc1, qc2, qc3, qc4, qc5 = st.columns(5)
-    selected_prompt = None
-    if qc1.button("Incomplete Courses Sem 3"):
-        selected_prompt = "What courses are still incomplete in Semester 3?"
-    if qc2.button("Next Internal Assessment"):
-        selected_prompt = "When is my next internal assessment?"
-    if qc3.button("Show Next Holiday"):
-        selected_prompt = "Show my next holiday"
-    if qc4.button("Data Structures Topics"):
-        selected_prompt = "What topics are in Data Structures?"
-    if qc5.button("Official CGPA Formula"):
-        selected_prompt = "What is my official university CGPA formula?"
+    with st.container(border=True):
+        section_label("QUICK PROMPTS")
+        st.caption("Choose a question to get started.")
+        quick_cols = st.columns(5)
+        quick_prompts = [
+            "What courses are still incomplete in Semester 3?",
+            "When is my next internal assessment?",
+            "Show my next holiday",
+            "What topics are in Data Structures?",
+            "What is my official university CGPA formula?",
+        ]
+        quick_labels = [
+            "Incomplete courses",
+            "Next assessment",
+            "Next holiday",
+            "Data Structures",
+            "CGPA rules",
+        ]
+        selected_prompt = None
+        for index, col in enumerate(quick_cols):
+            if col.button(quick_labels[index], key=f"quick_prompt_{index}", use_container_width=True):
+                selected_prompt = quick_prompts[index]
 
-    user_query = st.text_input("Ask a question about your engineering degree:", value=selected_prompt or "")
+    user_query = st.text_input(
+        "Your question",
+        value=selected_prompt or "",
+        placeholder="e.g. What should I prepare for my next assessment?",
+    )
 
     if user_query:
         query_norm = user_query.strip().lower()
-
-        # Safe-AI Rule: Refuse unverified formulas and regulations
-        unsupported_keywords = ["cgpa formula", "official formula", "exam regulation", "eligibility rule", "attendance policy"]
-        is_unsupported = any(k in query_norm for k in unsupported_keywords)
+        unsupported_keywords = [
+            "cgpa formula", "official formula", "exam regulation",
+            "eligibility rule", "attendance policy",
+        ]
+        is_unsupported = any(word in query_norm for word in unsupported_keywords)
 
         if is_unsupported:
-            st.warning("⚠️ **Data Area Used:** None")
+            st.warning("Data Area Used: None")
             st.error("I cannot verify that from the current Degree OS data.")
-            st.caption("Safe-AI Rule: Institutional regulations and CGPA formulas are not inferred without an authoritative source document.")
-        
+            st.caption(
+                "Institutional regulations and CGPA formulas are not inferred "
+                "without an authoritative source document."
+            )
+
         elif api_key and GEMINI_AVAILABLE:
-            with st.spinner("Degree AI is reviewing academic datasets..."):
+            with st.spinner("Degree AI is reviewing your academic data..."):
                 try:
                     client = genai.Client(api_key=api_key)
-                    sys_instruct = (
+                    system_instruction = (
                         "You are Degree AI. Answer only from the supplied degree data. "
                         "Do not invent university rules, dates, marks, formulas or syllabus content. "
-                        "If the requested information is missing, say: I cannot verify that from the current Degree OS data. "
-                        "At the end of your answer, write exactly which data area was used: Courses, Calendar, Assessments, Scores, Plan, or None."
+                        "If information is missing, say: I cannot verify that from the current "
+                        "Degree OS data. At the end, state which data area was used: Courses, "
+                        "Calendar, Assessments, Scores, Plan, Semesters, or None."
                     )
                     prompt_content = f"{context_data}\n\nStudent Question: {user_query}"
-                    
+
                     response = client.models.generate_content(
                         model="gemini-3.8-flash",
                         contents=prompt_content,
                         config=types.GenerateContentConfig(
-                            system_instruction=sys_instruct,
+                            system_instruction=system_instruction,
                             temperature=0.0,
-                        )
+                        ),
                     )
-                    st.markdown("### 💡 Degree AI Answer:")
-                    st.markdown(response.text)
-                except Exception as e:
-                    st.error(f"Gemini API query error ({e}). Falling back to local deterministic engine:")
+                    st.markdown("### Degree AI Answer")
+                    st.markdown(response.text or "The AI returned an empty response.")
+                except Exception as error:
+                    st.error(f"Gemini API query error: {error}")
                     api_key = ""
 
-        if not api_key and not is_unsupported:
-            st.markdown("### 💡 Degree AI Local Engine Answer:")
+        if (not api_key or not GEMINI_AVAILABLE) and not is_unsupported:
+            st.markdown("### Degree AI Answer")
 
-            # 1. Incomplete courses
-            if "incomplete" in query_norm or ("courses" in query_norm and "semester 3" in query_norm):
-                st.info("📌 **Data Area Used:** Courses")
+            if "incomplete" in query_norm or (
+                "courses" in query_norm and "semester 3" in query_norm
+            ):
+                st.info("Data Area Used: Courses")
                 sem_series = get_1d_series(courses_df, "Semester", "")
                 stat_series = get_1d_series(courses_df, "Status", "")
-                sem3_incomplete = courses_df[(sem_series == "Semester 3") & (stat_series != "Completed")]
+                sem3_incomplete = courses_df[
+                    (sem_series == "Semester 3") & (stat_series != "Completed")
+                ]
                 if not sem3_incomplete.empty:
-                    st.write("The following course(s) are incomplete in **Semester 3**:")
-                    for _, r in sem3_incomplete.iterrows():
-                        st.write(f"- **{r.get('Course Code')}**: {r.get('Course Title')} *(Status: {r.get('Status')})*")
+                    st.write("These Semester 3 courses are not marked as completed:")
+                    for _, row in sem3_incomplete.iterrows():
+                        st.write(
+                            f"- **{row.get('Course Code')}** — "
+                            f"{row.get('Course Title')} ({row.get('Status')})"
+                        )
                 else:
-                    st.write("All Semester 3 courses are marked as Completed.")
+                    st.write("All Semester 3 courses are marked as completed.")
 
-            # 2. Next assessment
             elif "assessment" in query_norm or "ia" in query_norm or "exam" in query_norm:
-                st.info("📌 **Data Area Used:** Assessments")
+                st.info("Data Area Used: Assessments")
                 if not assessments_df.empty:
-                    as_copy = assessments_df.copy()
-                    as_copy["PDate"] = pd.to_datetime(get_1d_series(as_copy, "Date", ""), errors="coerce")
-                    upcoming = as_copy[as_copy["PDate"] >= today_dt].sort_values("PDate")
+                    assessment_copy = assessments_df.copy()
+                    assessment_copy["PDate"] = pd.to_datetime(
+                        get_1d_series(assessment_copy, "Date", ""), errors="coerce"
+                    )
+                    upcoming = assessment_copy[
+                        assessment_copy["PDate"] >= today_dt
+                    ].sort_values("PDate")
                     if not upcoming.empty:
                         row = upcoming.iloc[0]
-                        st.write(f"Your next assessment is **{row.get('Assessment Name')}** ({row.get('Course Code')}) scheduled on **{row.get('Date')}**.")
+                        st.write(
+                            f"Your next assessment is **{row.get('Assessment Name')}** "
+                            f"({row.get('Course Code')}) on **{row.get('Date')}**."
+                        )
                     else:
-                        st.write(f"Next recorded assessment: **{as_copy.iloc[0].get('Assessment Name')}** on **{as_copy.iloc[0].get('Date')}**.")
+                        st.write("No upcoming assessment is recorded.")
                 else:
                     st.write("I cannot verify that from the current Degree OS data.")
 
-            # 3. Next holiday
             elif "holiday" in query_norm or "leave" in query_norm or "break" in query_norm:
-                st.info("📌 **Data Area Used:** Calendar")
+                st.info("Data Area Used: Calendar")
                 if not calendar_df.empty:
-                    cal_copy = calendar_df.copy()
-                    cal_copy["PDate"] = pd.to_datetime(get_1d_series(cal_copy, "Date", ""), errors="coerce")
-                    types = get_1d_series(cal_copy, "Type", "").astype(str).str.lower()
-                    leaves = cal_copy[types.str.contains("leave|holiday", na=False)]
-                    upcoming_leaves = leaves[leaves["PDate"] >= today_dt].sort_values("PDate")
+                    calendar_copy = calendar_df.copy()
+                    calendar_copy["PDate"] = pd.to_datetime(
+                        get_1d_series(calendar_copy, "Date", ""), errors="coerce"
+                    )
+                    event_types = get_1d_series(
+                        calendar_copy, "Type", ""
+                    ).astype(str).str.lower()
+                    leaves = calendar_copy[
+                        event_types.str.contains("leave|holiday", na=False)
+                    ]
+                    upcoming_leaves = leaves[
+                        leaves["PDate"] >= today_dt
+                    ].sort_values("PDate")
                     if not upcoming_leaves.empty:
                         row = upcoming_leaves.iloc[0]
-                        st.write(f"Your next holiday is **{row.get('Event Title')}** on **{row.get('Date')}**.")
+                        st.write(
+                            f"Your next holiday is **{row.get('Event Title')}** "
+                            f"on **{row.get('Date')}**."
+                        )
                     elif not leaves.empty:
-                        st.write(f"Next holiday in calendar: **{leaves.iloc[0].get('Event Title')}** on **{leaves.iloc[0].get('Date')}**.")
+                        st.write("No upcoming holiday is recorded.")
                     else:
-                        st.write("No upcoming holidays found in the calendar.")
+                        st.write("No holidays are recorded in your calendar.")
                 else:
                     st.write("I cannot verify that from the current Degree OS data.")
 
-            # 4. Course syllabus topics
-            elif "data structures" in query_norm or "syllabus" in query_norm or "topics" in query_norm:
-                st.info("📌 **Data Area Used:** Courses")
-                title_series = get_1d_series(courses_df, "Course Title", "").astype(str)
-                ds_course = courses_df[title_series.str.contains("Data Structures", case=False, na=False)]
+            elif (
+                "data structures" in query_norm
+                or "syllabus" in query_norm
+                or "topics" in query_norm
+            ):
+                st.info("Data Area Used: Courses")
+                title_series = get_1d_series(
+                    courses_df, "Course Title", ""
+                ).astype(str)
+                ds_course = courses_df[
+                    title_series.str.contains("Data Structures", case=False, na=False)
+                ]
                 if not ds_course.empty:
-                    topics = ds_course.iloc[0].get("Syllabus Topics", "N/A")
-                    st.write(f"Topics in **Data Structures ({ds_course.iloc[0].get('Course Code')})**:")
-                    st.markdown(f"> {topics}")
+                    row = ds_course.iloc[0]
+                    st.write(
+                        f"Topics in **Data Structures ({row.get('Course Code')})**:"
+                    )
+                    st.markdown(f"> {row.get('Syllabus Topics', 'N/A')}")
                 else:
                     st.write("I cannot verify that from the current Degree OS data.")
 
-            # 5. Checklist status
             elif "checklist" in query_norm or "task" in query_norm or "plan" in query_norm:
-                st.info("📌 **Data Area Used:** Plan")
-                st.write(f"Checklist Summary: {len(checklist_df)} total tasks recorded. Pending tasks:")
-                stat_col = get_1d_series(checklist_df, "status", "").astype(str).str.lower()
-                pending = checklist_df[stat_col != "done"]
-                for _, r in pending.iterrows():
-                    st.write(f"- [{r.get('status')}] **{r.get('item')}** (Target: {r.get('target_date')})")
+                st.info("Data Area Used: Plan")
+                st.write(f"{len(checklist_df)} tasks are recorded. Pending tasks:")
+                status_values = get_1d_series(
+                    checklist_df, "status", ""
+                ).astype(str).str.lower()
+                pending = checklist_df[status_values != "done"]
+                for _, row in pending.iterrows():
+                    st.write(
+                        f"- [{row.get('status')}] **{row.get('item')}** "
+                        f"(Target: {row.get('target_date')})"
+                    )
 
-            # 6. Semester status
             elif "semester" in query_norm:
-                st.info("📌 **Data Area Used:** Semesters")
-                st.dataframe(semesters_df[["Semester", "Status", "Completed Credits", "Target Credits"]], use_container_width=True)
+                st.info("Data Area Used: Semesters")
+                st.dataframe(
+                    semesters_df[
+                        ["Semester", "Status", "Completed Credits", "Target Credits"]
+                    ],
+                    use_container_width=True,
+                    hide_index=True,
+                )
 
             else:
-                st.warning("📌 **Data Area Used:** None")
+                st.info("Data Area Used: None")
                 st.write("I cannot verify that from the current Degree OS data.")
 
-# ==========================================
-# TAB 11: DATA ADMIN (PHASE 7)
-# ==========================================
+
+# =========================================================
+# TAB 11 — DATA ADMIN
+# =========================================================
 elif selected_tab == "11. Data Admin":
-    st.title("🛠️ Data Administrator")
-    st.markdown("Directly edit, update, or reset any dataset to test data maintainability.")
+    page_header(
+        "WORKSPACE SETTINGS",
+        "Data Administrator",
+        "Edit or restore the datasets that power your Degree OS.",
+        "🛠️",
+    )
 
     table_options = {
         "semesters.csv": (semesters_df, DEFAULT_SEMESTERS),
@@ -766,23 +1522,48 @@ elif selected_tab == "11. Data Admin":
         "plan_checklist.csv": (checklist_df, DEFAULT_CHECKLIST),
     }
 
-    choice = st.selectbox("Select Dataset to Edit", list(table_options.keys()))
-    df_to_edit, default_blueprint = table_options[choice]
+    dataset_choice = st.selectbox("Choose a dataset", list(table_options.keys()))
+    df_to_edit, default_blueprint = table_options[dataset_choice]
 
-    st.markdown(f"Editing **`{choice}`**:")
-    edited_data = st.data_editor(df_to_edit, num_rows="dynamic", use_container_width=True, key=f"admin_editor_{choice}")
+    dataset_name_map = {
+        "semesters.csv": "semesters",
+        "courses.csv": "courses",
+        "university_syllabus.csv": "university_syllabus",
+        "academic_calendar.csv": "calendar",
+        "calendar.csv": "calendar",
+        "assessments.csv": "assessments",
+        "scores.csv": "scores",
+        "plan_checklist.csv": "plan_checklist",
+    }
+    dataset_name = dataset_name_map[dataset_choice]
 
-    col_btn1, col_btn2 = st.columns([1, 4])
-    with col_btn1:
-        if st.button("💾 Save Changes", type="primary"):
-            clean_edited = edited_data.loc[:, ~edited_data.columns.duplicated(keep="first")]
-            clean_edited.to_csv(os.path.join(DATA_DIR, choice), index=False)
-            st.success(f"✅ Successfully updated and saved `{choice}`!")
-            st.rerun()
-    with col_btn2:
-        if st.button(f"🔄 Reset `{choice}` to Blueprint Template"):
-            default_blueprint.to_csv(os.path.join(DATA_DIR, choice), index=False)
-            st.warning(f"Reset `{choice}` to clean template!")
-            st.rerun()
+    with st.container(border=True):
+        section_label("DATASET EDITOR")
+        st.subheader(f"Editing {dataset_choice}")
+        edited_data = st.data_editor(
+            df_to_edit,
+            num_rows="dynamic",
+            use_container_width=True,
+            hide_index=True,
+            key=f"admin_editor_{dataset_choice}",
+        )
 
+        save_col, reset_col = st.columns([1, 2])
+        with save_col:
+            if st.button("Save changes", type="primary", key="admin_save"):
+                clean_edited = edited_data.loc[
+                    :, ~edited_data.columns.duplicated(keep="first")
+                ].copy()
+                if dataset_name == "plan_checklist" and "target_date" in clean_edited.columns:
+                    clean_edited["target_date"] = clean_edited["target_date"].apply(
+                        safe_date_string
+                    )
+                backend.save_dataframe(dataset_name, clean_edited)
+                st.success(f"Successfully updated {dataset_choice} in Supabase.")
+                st.rerun()
 
+        with reset_col:
+            if st.button("Reset to blueprint template", key="admin_reset"):
+                backend.save_dataframe(dataset_name, default_blueprint)
+                st.warning(f"{dataset_choice} was reset to its default template.")
+                st.rerun()
